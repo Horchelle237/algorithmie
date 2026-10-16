@@ -1,3 +1,15 @@
+// =====================================================================
+//  COMPARAISON DES ALGORITHMES DE TRI
+//  But : trier des tableaux de nombres avec plusieurs méthodes
+//        et mesurer combien de temps chacune met (= "benchmark").
+// =====================================================================
+
+
+// ---------------------------------------------------------------------
+// JEU DE DONNÉES FIXE
+// Tableau de 180 nombres (entre -5000 et 9999) toujours le même,
+// pour pouvoir comparer les algos sur exactement les mêmes valeurs.
+// ---------------------------------------------------------------------
 const DATA = [
   9980, -1539, -1749, 2213, 2880, -4829, 8434, 8494, -4340, -4511, 
   4994, -1820, 3604, 8562, 1922, 9543, 1483, 4379, 5692, 6291, 
@@ -19,6 +31,14 @@ const DATA = [
   4238, 3193, -2102, -131, 1105, 349, -3093, 9346, -3658, -2570
 ];
 
+
+// ---------------------------------------------------------------------
+// GÉNÉRER UN TABLEAU ALÉATOIRE
+// Crée un tableau de "taille" nombres entiers au hasard entre -10000 et 9999.
+// Math.random()      -> nombre à virgule entre 0 et 1
+// * 20000 - 10000    -> on l'étire entre -10000 et 10000
+// Math.floor(...)    -> on enlève la virgule (arrondi vers le bas)
+// ---------------------------------------------------------------------
 function genererTableauAleatoire(taille) {
   const tab = [];
   for (let i = 0; i < taille; i++) {
@@ -27,62 +47,104 @@ function genererTableauAleatoire(taille) {
   return tab;
 }
 
+
+// =====================================================================
+//  LES ALGORITHMES DE TRI
+//  Remarque : chacun commence par [...donnees] = faire une COPIE
+//  du tableau, pour ne pas modifier le tableau d'origine.
+// =====================================================================
+
+
+// ---------------------------------------------------------------------
+// TRI À BULLES (Bubble sort)  — lent : O(n²)
+// Idée : on compare les voisins deux par deux et on les échange s'ils
+// sont dans le mauvais ordre. À chaque tour, le plus grand "remonte"
+// à la fin comme une bulle.
+// ---------------------------------------------------------------------
 function bubbleSort(donnees) {
-  const values = [...donnees];
+  const values = [...donnees];                 // copie du tableau
+  // "fin" = dernière case pas encore triée (la fin se trie au fur et à mesure)
   for (let fin = values.length - 1; fin > 0; fin--) {
-    let swap = false;
+    let swap = false;                          // a-t-on fait un échange pendant ce tour ?
     for (let i = 0; i < fin; i++) {
-      if (values[i] > values[i + 1]) {
-        [values[i], values[i + 1]] = [values[i + 1], values[i]];
+      if (values[i] > values[i + 1]) {         // voisins dans le mauvais ordre
+        [values[i], values[i + 1]] = [values[i + 1], values[i]]; // on les échange
         swap = true;
       }
     }
-    if (!swap) break;
+    if (!swap) break;                          // aucun échange = déjà trié, on arrête
   }
   return values;
 }
 
+
+// ---------------------------------------------------------------------
+// TRI PAR SÉLECTION (Selection sort)  — lent : O(n²)
+// Idée : on cherche le plus petit élément du reste du tableau
+// et on le met à sa place, case par case (comme ranger des cartes
+// en prenant toujours la plus petite).
+// ---------------------------------------------------------------------
 function selectionSort(donnees) {
   const values = [...donnees];
-  for (let i = 0; i < values.length - 1; i++) {
-    let indiceMin = i;
-    for (let j = i + 1; j < values.length; j++) {
+  for (let i = 0; i < values.length - 1; i++) {   // i = case qu'on veut remplir
+    let indiceMin = i;                            // position du plus petit trouvé
+    for (let j = i + 1; j < values.length; j++) { // on parcourt le reste
       if (values[j] < values[indiceMin]) {
-        indiceMin = j;
+        indiceMin = j;                            // nouveau plus petit
       }
     }
-    if (indiceMin !== i) {
+    if (indiceMin !== i) {                        // on place le minimum en case i
       [values[i], values[indiceMin]] = [values[indiceMin], values[i]];
     }
   }
   return values;
 }
 
+
+// ---------------------------------------------------------------------
+// TRI PAR INSERTION (Insertion sort)  — O(n²), mais rapide si presque trié
+// Idée : comme quand on trie ses cartes en main. On prend une carte
+// et on décale les plus grandes vers la droite pour l'insérer au bon endroit.
+// ---------------------------------------------------------------------
 function insertionSort(donnees) {
   const values = [...donnees];
   for (let i = 1; i < values.length; i++) {
-    const valeur = values[i];
-    let j = i - 1;
-    while (j >= 0 && values[j] > valeur) {
-      values[j + 1] = values[j];
+    const valeur = values[i];                 // la "carte" à placer
+    let j = i - 1;                            // on regarde à sa gauche
+    while (j >= 0 && values[j] > valeur) {    // tant que c'est plus grand...
+      values[j + 1] = values[j];              // ...on décale d'une case à droite
       j--;
     }
-    values[j + 1] = valeur;
+    values[j + 1] = valeur;                   // on insère la carte au trou libéré
   }
   return values;
 }
 
+
+// ---------------------------------------------------------------------
+// TRI FUSION (Merge sort)  — rapide : O(n log n)
+// Idée "diviser pour régner" :
+//   1. couper le tableau en deux moitiés
+//   2. trier chaque moitié (la fonction s'appelle elle-même = RÉCURSIVITÉ)
+//   3. fusionner les deux moitiés triées en une seule liste triée
+// ---------------------------------------------------------------------
 function mergeSort(donnees) {
+  // Cas de base : 0 ou 1 élément = déjà trié, on arrête la récursivité
   if (donnees.length <= 1) {
     return [...donnees];
   }
+
+  // 1. Couper en deux
   const milieu = Math.floor(donnees.length / 2);
+  // 2. Trier chaque moitié (appel récursif)
   const gauche = mergeSort(donnees.slice(0, milieu));
   const droite = mergeSort(donnees.slice(milieu));
-  
+
+  // 3. Fusionner : on compare le 1er élément restant de chaque moitié
+  //    et on prend le plus petit, jusqu'à vider une des deux moitiés
   const resultat = [];
-  let i = 0;
-  let j = 0;
+  let i = 0;   // position dans "gauche"
+  let j = 0;   // position dans "droite"
   while (i < gauche.length && j < droite.length) {
     if (gauche[i] <= droite[j]) {
       resultat.push(gauche[i]);
@@ -92,17 +154,29 @@ function mergeSort(donnees) {
       j++;
     }
   }
+  // On ajoute ce qui reste (une des deux moitiés est déjà vide)
   return resultat.concat(gauche.slice(i), droite.slice(j));
 }
 
+
+// ---------------------------------------------------------------------
+// TRI RAPIDE (Quick sort)  — rapide en moyenne : O(n log n)
+// Idée : on choisit un PIVOT (ici l'élément du milieu), puis on range
+// les valeurs en 3 groupes : plus petites, égales, plus grandes.
+// On trie ensuite les "petits" et les "grands" de la même façon (récursivité).
+// ---------------------------------------------------------------------
 function quickSort(donnees) {
+  // Cas de base : 0 ou 1 élément = déjà trié
   if (donnees.length <= 1) {
     return [...donnees];
   }
-  const pivot = donnees[Math.floor(donnees.length / 2)];
-  const petits = [];
-  const egaux = [];
-  const grands = [];
+
+  const pivot = donnees[Math.floor(donnees.length / 2)]; // valeur de référence
+  const petits = [];   // < pivot
+  const egaux = [];    // = pivot
+  const grands = [];   // > pivot
+
+  // On répartit chaque valeur dans le bon groupe
   for (const valeur of donnees) {
     if (valeur < pivot) {
       petits.push(valeur);
@@ -112,6 +186,9 @@ function quickSort(donnees) {
       egaux.push(valeur);
     }
   }
+
+  // On recolle : petits triés + égaux + grands triés
+  // ("..." = étaler le contenu d'un tableau dans un autre)
   return [
     ...quickSort(petits),
     ...egaux,
@@ -119,22 +196,34 @@ function quickSort(donnees) {
   ];
 }
 
+
+// =====================================================================
+//  BOGO SORT (pour rire) — l'algo le plus nul possible
+//  Idée : mélanger au hasard jusqu'à ce que ce soit trié par chance.
+//  Utilisable seulement sur de tout petits tableaux (3 éléments ici).
+// =====================================================================
+
+// Vérifie si un tableau est trié : chaque élément doit être <= au suivant
 function estTrie(tableau) {
   for (let i = 1; i < tableau.length; i++) {
     if (tableau[i - 1] > tableau[i]) {
-      return false;
+      return false;          // deux voisins dans le mauvais ordre -> pas trié
     }
   }
   return true;
 }
 
+// Mélange le tableau au hasard (algorithme de Fisher-Yates)
+// Attention : modifie le tableau directement (pas de copie)
 function melanger(tableau) {
   for (let i = tableau.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [tableau[i], tableau[j]] = [tableau[j], tableau[i]];
+    const j = Math.floor(Math.random() * (i + 1)); // case au hasard entre 0 et i
+    [tableau[i], tableau[j]] = [tableau[j], tableau[i]]; // échange
   }
 }
 
+// Mélange en boucle jusqu'à ce que ce soit trié
+// "limite" = nombre max d'essais pour éviter une boucle infinie
 function bogoSort(tableau, limite = 100000) {
   const a = [...tableau];
   let tentatives = 0;
@@ -143,22 +232,39 @@ function bogoSort(tableau, limite = 100000) {
     tentatives++;
   }
   if (!estTrie(a)) {
-    throw new Error("Trop de tentatives !");
+    throw new Error("Trop de tentatives !"); // on abandonne avec une erreur
   }
   return a;
 }
 
+
+// =====================================================================
+//  MESURE DU TEMPS (BENCHMARK)
+// =====================================================================
+
+// Lance un algo sur une copie des données et affiche le temps mis.
+// performance.now() = heure actuelle en millisecondes (très précis)
+// temps = fin - début
 function benchmark(nom, algorithme, donnees) {
   const copie = [...donnees];
-  const debut = performance.now();
-  const resultat = algorithme(copie);
-  const fin = performance.now();
+  const debut = performance.now();          // top départ du chrono
+  const resultat = algorithme(copie);       // on exécute le tri
+  const fin = performance.now();            // stop du chrono
+  // padEnd(20) = ajoute des espaces pour aligner les noms en colonne
+  // toFixed(4) = garder 4 chiffres après la virgule
   console.log(`${nom.padEnd(20, ' ')} : ${(fin - debut).toFixed(4)} ms`);
   return resultat;
 }
 
+
+// =====================================================================
+//  PROGRAMME PRINCIPAL
+// =====================================================================
+
+// Tailles de tableaux à tester (pour voir comment le temps augmente)
 const taillesTest = [3, 100, 1000, 10000];
 
+// "Dictionnaire" nom -> fonction, pour pouvoir boucler sur tous les algos
 const algorithmes = {
   "Bubble sort": bubbleSort,
   "Selection sort": selectionSort,
@@ -167,9 +273,14 @@ const algorithmes = {
   "Quick sort": quickSort
 };
 
+// Pour chaque taille : on génère UN tableau aléatoire,
+// puis on le fait trier par chaque algo (sur une copie à chaque fois,
+// pour que tous trient exactement les mêmes données)
 taillesTest.forEach(taille => {
   console.log(`Test avec un tableau de : ${taille} éléments`);
   const donneesOriginales = genererTableauAleatoire(taille);
+
+  // Object.entries(...) donne des paires [nom, fonction]
   for (const [nom, fonctionTri] of Object.entries(algorithmes)) {
     const copieDonnees = [...donneesOriginales];
     const debut = performance.now();
@@ -177,6 +288,8 @@ taillesTest.forEach(taille => {
     const fin = performance.now();
     console.log(`- ${nom.padEnd(20, ' ')} : ${(fin - debut).toFixed(4)} ms`);
   }
+
+  // Bogo sort seulement pour 3 éléments (sinon ça prendrait une éternité)
   if (taille === 3) {
     const copieBogo = [...donneesOriginales];
     const debutBogo = performance.now();
@@ -186,9 +299,9 @@ taillesTest.forEach(taille => {
   }
 });
 
+// Même test, mais sur le tableau fixe DATA (180 valeurs)
 console.log(`\nBenchmarks sur le grand dataset DATA :`);
 benchmark("Bubble sort", bubbleSort, DATA);
-
 benchmark("Selection sort", selectionSort, DATA);
 benchmark("Insertion sort", insertionSort, DATA);
 benchmark("Merge sort", mergeSort, DATA);
